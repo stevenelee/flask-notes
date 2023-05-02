@@ -84,8 +84,6 @@ def user_info(username):
     """Display user information"""
 
     if SESSION_USER_KEY not in session or username != session[SESSION_USER_KEY]:
-        # flash("You must be logged in to view!")
-        # return redirect("/")
         raise Unauthorized()
 
     user = User.query.get_or_404(username)
@@ -102,5 +100,21 @@ def logout_user():
 
     if form.validate_on_submit():
         session.pop("username", None)
+
+    return redirect("/")
+
+@app.post("/users/<username>/delete")
+def delete_user(username):
+    """
+    Delete the user from the database ; log the user out and redirect to
+    homepage
+    """
+
+    user = User.query.get_or_404(username)
+    form = CSRFProtectForm()
+
+    if form.validate_on_submit():
+        db.session.delete(user)
+        db.session.commit()
 
     return redirect("/")
