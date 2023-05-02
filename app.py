@@ -4,6 +4,7 @@ import os
 
 from flask import Flask, render_template, redirect, session, flash
 from flask_debugtoolbar import DebugToolbarExtension
+from werkzeug.exceptions import Unauthorized
 
 from models import connect_db, db, User
 from forms import RegisterForm, LoginForm, CSRFProtectForm
@@ -19,6 +20,7 @@ db.create_all()
 
 toolbar = DebugToolbarExtension(app)
 
+SESSION_USER_KEY = "username"
 
 @app.get("/")
 def homepage():
@@ -26,9 +28,11 @@ def homepage():
 
     return redirect("/register")
 
+
 @app.route("/register", methods=["GET", "POST"])
 def register_user():
     """Display register user form and submit the credentials"""
+
     form = RegisterForm()
 
     if form.validate_on_submit():
@@ -42,12 +46,13 @@ def register_user():
         db.session.add(user)
         db.session.commit()
 
-        session["user_id"] = user.id
+        session[SESSION_USER_KEY] = user.username
 
-        return redirect("/users/<username>")
+        return redirect(f"/users/{username}")
 
     else:
         return render_template("register.html", form=form)
+
 
 @app.route("/login", methods=["GET", "POST"])
 def login_user():
@@ -65,26 +70,37 @@ def login_user():
         user = User.authenticate(username, password)
 
         if user:
-            session["user_id"] = user.id
-            return redirect("/users/<username>")
+            session[SESSION_USER_KEY] = user.username
+            return redirect(f"/users/{username}")
 
         else:
             form.username.errors = ["Bad name/password"]
 
     return render_template("login.html", form=form)
 
+
 @app.get("/users/<username>")
 def user_info(username):
     """Display user information"""
 
-    if f"{username}" not in session:
-        flash("You must be logged in to view!")
-        return redirect("/")
+    if SESSION_USER_KEY not in session or username != session[SESSION_USER_KEY]:
+        # flash("You must be logged in to view!")
+        # return redirect("/")
+        raise Unauthorized()
 
-        # alternatively, can return HTTP Unauthorized status:
-        #
-        # from werkzeug.exceptions import Unauthorized
-        # raise Unauthorized()
+    user = User.query.get_or_404(username)
+    form = CSRFProtectForm()
 
-    else:
-        return render_template("user.html")
+    return render_template("user.html", user=user, form=form)
+
+
+@app.post("/logout")
+def logout_user():
+    """Logs user out and redirects to homepage."""
+
+    form = CSRFProtectForm()
+
+    if form.validate_on_submit():
+        session.pop("username", None)
+
+    return redirect("/")

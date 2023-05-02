@@ -31,6 +31,7 @@ class RegisterForm(FlaskForm):
         validators=[InputRequired()]
         )
 
+
 class LoginForm(FlaskForm):
     """Form for logging in a user."""
 
@@ -43,3 +44,7 @@ class LoginForm(FlaskForm):
         "Password",
         validators=[InputRequired()]
         )
+
+
+class CSRFProtectForm(FlaskForm):
+    """Form just for CSRF Protection"""
