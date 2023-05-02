@@ -18,7 +18,7 @@ def connect_db(app):
         """site user"""
 
         __tablename__ = "users"
-
+        
         username = db.Column(
             db.String(20),
             primary_key=True)

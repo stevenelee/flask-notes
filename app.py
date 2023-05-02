@@ -20,14 +20,15 @@ db.create_all()
 toolbar = DebugToolbarExtension(app)
 
 
-@app.get('/')
+@app.get("/")
 def homepage():
+    """Redirect to the register page"""
 
-    return redirect('/register')
+    return redirect("/register")
 
-@app.route('/register', methods=["GET", "POST"])
-def register():
-
+@app.route("/register", methods=["GET", "POST"])
+def register_user():
+    """Display register user form and submit the credentials"""
     form = RegisterForm()
 
     if form.validate_on_submit():
@@ -43,8 +44,47 @@ def register():
 
         session["user_id"] = user.id
 
-        # on successful login, redirect to secret page
         return redirect("/users/<username>")
 
     else:
-        return render_template('register.html', form=form)
+        return render_template("register.html", form=form)
+
+@app.route("/login", methods=["GET", "POST"])
+def login_user():
+    """
+    Display login form and authenticate user ; flash error if unable
+    to authenticate
+    """
+
+    form = LoginForm()
+
+    if form.validate_on_submit():
+        username = form.username.data
+        password = form.password.data
+
+        user = User.authenticate(username, password)
+
+        if user:
+            session["user_id"] = user.id
+            return redirect("/users/<username>")
+
+        else:
+            form.username.errors = ["Bad name/password"]
+
+    return render_template("login.html", form=form)
+
+@app.get("/users/<username>")
+def user_info(username):
+    """Display user information"""
+
+    if f"{username}" not in session:
+        flash("You must be logged in to view!")
+        return redirect("/")
+
+        # alternatively, can return HTTP Unauthorized status:
+        #
+        # from werkzeug.exceptions import Unauthorized
+        # raise Unauthorized()
+
+    else:
+        return render_template("user.html")
