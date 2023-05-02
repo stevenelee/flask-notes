@@ -6,8 +6,8 @@ from flask import Flask, render_template, redirect, session, flash
 from flask_debugtoolbar import DebugToolbarExtension
 from werkzeug.exceptions import Unauthorized
 
-from models import connect_db, db, User
-from forms import RegisterForm, LoginForm, CSRFProtectForm
+from models import connect_db, db, User, Note
+from forms import RegisterForm, LoginForm, CSRFProtectForm, NoteForm
 
 app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get(
@@ -103,12 +103,16 @@ def logout_user():
 
     return redirect("/")
 
+
 @app.post("/users/<username>/delete")
 def delete_user(username):
     """
     Delete the user from the database ; log the user out and redirect to
     homepage
     """
+
+    if SESSION_USER_KEY not in session or username != session[SESSION_USER_KEY]:
+        raise Unauthorized()
 
     user = User.query.get_or_404(username)
     form = CSRFProtectForm()
@@ -118,3 +122,72 @@ def delete_user(username):
         db.session.commit()
 
     return redirect("/")
+
+
+@app.route("/users/<username>/notes/add", methods=["GET", "POST"])
+def add_notes(username):
+    """display form to add note ; add note and redirect to user page"""
+
+    if SESSION_USER_KEY not in session or username != session[SESSION_USER_KEY]:
+        raise Unauthorized()
+
+    form = NoteForm()
+    User.query.get_or_404(username)
+
+    if form.validate_on_submit():
+        title = form.title.data
+        content = form.content.data
+
+        note = Note(title=title,
+                    content=content,
+                    owner_username=username)
+
+        db.session.add(note)
+        db.session.commit()
+
+        return redirect(f"/users/{username}")
+
+    return render_template("addnote.html", form=form)
+
+
+@app.route("/notes/<int:note_id>/update", methods=["GET", "POST"])
+def update_notes(note_id):
+    """show edit note form, update note on submit"""
+
+    note = Note.query.get_or_404(note_id)
+
+    if SESSION_USER_KEY not in session or note.owner_username != session[SESSION_USER_KEY]:
+        raise Unauthorized()
+
+    form = NoteForm(obj=note)
+
+    if form.validate_on_submit():
+        note.title = form.title.data
+        note.content = form.content.data
+
+        db.session.commit()
+
+        flash("Note updated!")
+        return redirect(f"/users/{note.owner_username}")
+
+    return render_template("editnote.html", form=form, note=note)
+
+
+@app.post("/notes/<int:note_id>/delete")
+def delete_note(note_id):
+    """Delete note and redirect to user page"""
+
+    note = Note.query.get_or_404(note_id)
+    # user = note.user
+
+    if SESSION_USER_KEY not in session or note.owner_username != session[SESSION_USER_KEY]:
+        raise Unauthorized()
+
+    form = CSRFProtectForm()
+
+    if form.validate_on_submit():
+        db.session.delete(note)
+        db.session.commit()
+
+    return redirect(f"/users/{note.owner_username}")
+

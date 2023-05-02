@@ -70,6 +70,7 @@ class User(db.Model):
 
     notes = db.relationship("Note", backref="user")
 
+
 class Note(db.Model):
     """Note model"""
 

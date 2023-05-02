@@ -20,6 +20,11 @@
   {% endfor %}
 </ul>
 
+<form action="/users/{{ user.username }}/notes/add" method="POST">
+  {{form.hidden_tag()}}
+  <button type="submit" class="btn btn-primary">Add Note</button>
+</form>
+
 <form action="/logout" method="POST">
   {{form.hidden_tag()}}
   <button type="submit" class="btn btn-primary">Logout</button>
@@ -27,7 +32,8 @@
 
 <form action="/users/{{ user.username }}/delete" method="POST">
   {{form.hidden_tag()}}
-  <button type="submit" class="btn btn-primary">delete</button>
+  <button type="submit" class="btn btn-primary">Delete</button>
 </form>
+
 
 {% endblock %}
