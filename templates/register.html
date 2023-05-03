@@ -3,6 +3,7 @@
 {% block title %}Create New User{% endblock %}
 
 {% block content %}
+<div class="container-fluid">
   <form method="POST">
 
     {{ form.hidden_tag() }}
@@ -19,8 +20,9 @@
       </p>
     {% endfor %}
 
-    <button type="submit">Register</button>
+    <button type="submit" class="btn btn-primary">Register</button>
 
   </form>
+</div>
 
   {% endblock %}

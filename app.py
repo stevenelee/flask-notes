@@ -15,12 +15,14 @@ app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get(
 app.config["SQLALCHEMY_ECHO"] = True
 app.config["SECRET_KEY"] = "secret to everyone"
 
+app.config['DEBUG_TB_INTERCEPT_REDIRECTS'] = False
+
 connect_db(app)
 db.create_all()
 
 toolbar = DebugToolbarExtension(app)
 
-SESSION_USER_KEY = "username"
+USER_KEY = "username"
 
 @app.get("/")
 def homepage():
@@ -31,7 +33,7 @@ def homepage():
 
 @app.route("/register", methods=["GET", "POST"])
 def register_user():
-    """Display register user form and submit the credentials"""
+    """Display register user form and submit the credentials."""
 
     form = RegisterForm()
 
@@ -46,7 +48,7 @@ def register_user():
         db.session.add(user)
         db.session.commit()
 
-        session[SESSION_USER_KEY] = user.username
+        session[USER_KEY] = user.username
 
         return redirect(f"/users/{username}")
 
@@ -58,7 +60,7 @@ def register_user():
 def login_user():
     """
     Display login form and authenticate user ; flash error if unable
-    to authenticate
+    to authenticate.
     """
 
     form = LoginForm()
@@ -70,7 +72,7 @@ def login_user():
         user = User.authenticate(username, password)
 
         if user:
-            session[SESSION_USER_KEY] = user.username
+            session[USER_KEY] = user.username
             return redirect(f"/users/{username}")
 
         else:
@@ -81,9 +83,9 @@ def login_user():
 
 @app.get("/users/<username>")
 def user_info(username):
-    """Display user information"""
+    """Display user information."""
 
-    if SESSION_USER_KEY not in session or username != session[SESSION_USER_KEY]:
+    if USER_KEY not in session or username != session[USER_KEY]:
         raise Unauthorized()
 
     user = User.query.get_or_404(username)
@@ -103,32 +105,42 @@ def logout_user():
 
     return redirect("/")
 
+"""TODO: FIND ALL NOTES IN DB AND DELETE THEM BEFORE"""
 
 @app.post("/users/<username>/delete")
 def delete_user(username):
     """
     Delete the user from the database ; log the user out and redirect to
-    homepage
+    homepage.
     """
 
-    if SESSION_USER_KEY not in session or username != session[SESSION_USER_KEY]:
+    if USER_KEY not in session or username != session[USER_KEY]:
         raise Unauthorized()
 
-    user = User.query.get_or_404(username)
     form = CSRFProtectForm()
 
     if form.validate_on_submit():
+        user = User.query.get_or_404(username)
+
+        Note.query.filter_by(owner_username=username).delete()
+
         db.session.delete(user)
         db.session.commit()
+
+        session.pop("username")
 
     return redirect("/")
 
 
+"""TODO: USE COMMENT SEPARATORS WITH #
+         KEEP CONSISTENT ORDER OF ROUTES
+"""
+
 @app.route("/users/<username>/notes/add", methods=["GET", "POST"])
 def add_notes(username):
-    """display form to add note ; add note and redirect to user page"""
+    """Display form to add note ; add note and redirect to user page."""
 
-    if SESSION_USER_KEY not in session or username != session[SESSION_USER_KEY]:
+    if USER_KEY not in session or username != session[USER_KEY]:
         raise Unauthorized()
 
     form = NoteForm()
@@ -147,16 +159,16 @@ def add_notes(username):
 
         return redirect(f"/users/{username}")
 
-    return render_template("addnote.html", form=form)
+    return render_template("add_note.html", form=form)
 
 
 @app.route("/notes/<int:note_id>/update", methods=["GET", "POST"])
 def update_notes(note_id):
-    """show edit note form, update note on submit"""
+    """Show edit note form, update note on submit."""
 
     note = Note.query.get_or_404(note_id)
 
-    if SESSION_USER_KEY not in session or note.owner_username != session[SESSION_USER_KEY]:
+    if USER_KEY not in session or note.owner_username != session[USER_KEY]:
         raise Unauthorized()
 
     form = NoteForm(obj=note)
@@ -170,24 +182,26 @@ def update_notes(note_id):
         flash("Note updated!")
         return redirect(f"/users/{note.owner_username}")
 
-    return render_template("editnote.html", form=form, note=note)
+    return render_template("edit_note.html", form=form, note=note)
 
 
 @app.post("/notes/<int:note_id>/delete")
 def delete_note(note_id):
-    """Delete note and redirect to user page"""
+    """Delete note and redirect to user page."""
 
     note = Note.query.get_or_404(note_id)
     # user = note.user
 
-    if SESSION_USER_KEY not in session or note.owner_username != session[SESSION_USER_KEY]:
+    if USER_KEY not in session or note.owner_username != session[USER_KEY]:
         raise Unauthorized()
 
     form = CSRFProtectForm()
+
 
     if form.validate_on_submit():
         db.session.delete(note)
         db.session.commit()
 
-    return redirect(f"/users/{note.owner_username}")
+        return redirect(f"/users/{note.owner_username}")
 
+    """TODO: else, check for CSRF token """

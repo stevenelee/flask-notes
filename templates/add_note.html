@@ -2,7 +2,7 @@
 {% block title %}Add Note{% endblock %}
 
 {% block content %}
-
+<div class="container-fluid">
   <h1 class="display-4">Add Note</h1>
 
   <form method="POST">
@@ -21,8 +21,9 @@
       </p>
     {% endfor %}
 
-    <button type="submit">Add Note</button>
+    <button class="btn btn-success" type="submit">Add Note</button>
 
   </form>
+</div>
 
   {% endblock %}

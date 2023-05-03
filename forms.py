@@ -58,7 +58,10 @@ class NoteForm(FlaskForm):
         "Content",
          validators=[InputRequired()]
     )
+#TODO: match length validators eg. Length(max=100)
 
+"""TODO: make note edit form class that inherits noteform NoteEditForm(NoteForm)
+"""
 
 class CSRFProtectForm(FlaskForm):
     """Form just for CSRF Protection"""

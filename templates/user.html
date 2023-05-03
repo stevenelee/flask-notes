@@ -3,37 +3,52 @@
 {% block title %}{{user.username}}{% endblock %}
 
 {% block content %}
-<h1>{{user.username}}</h1>
+<div class="container-fluid">
+  <h1>{{user.username}}</h1>
 
-<ul>
-  <li>First Name: {{user.first_name}}</li>
-  <li>Last Name: {{user.last_name}}</li>
-  <li>E-mail: {{user.email}}</li>
-</ul>
+  <ul>
+    <li>First Name: {{user.first_name}}</li>
+    <li>Last Name: {{user.last_name}}</li>
+    <li>E-mail: {{user.email}}</li>
+  </ul>
 
-<ul>
-  {% for note in user.notes %}
-  <li>
-    <a href="/notes/{{ note.id }}/update"></a>
-    <a href="/notes/{{ note.id }}/delete"></a>
-    {{ note.title }} {{ note.content }}</li>
-  {% endfor %}
-</ul>
+  <ul>
+    {% for note in user.notes %}
+    <li>
+      <div class="row">
+        <form class="m-2" action="/notes/{{ note.id }}/update" method="POST">
+          {{form.hidden_tag()}}
+          <button type="submit" class="btn btn-sm btn-secondary">Edit</button>
+        </form>
 
-<form action="/users/{{ user.username }}/notes/add" method="POST">
-  {{form.hidden_tag()}}
-  <button type="submit" class="btn btn-primary">Add Note</button>
-</form>
+        <form class="m-2" action="/notes/{{ note.id }}/delete" method="POST">
+          {{form.hidden_tag()}}
+          <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+        </form>
+        
+        {{ note.title }} {{ note.content }}
+      </div>
+    </li>
+    {% endfor %}
+  </ul>
 
-<form action="/logout" method="POST">
-  {{form.hidden_tag()}}
-  <button type="submit" class="btn btn-primary">Logout</button>
-</form>
+    <div class="row">
+      <form class="m-1" action="/users/{{ user.username }}/notes/add" method="POST">
+        {{form.hidden_tag()}}
+        <button type="submit" class="btn btn-primary">Add Note</button>
+      </form>
 
-<form action="/users/{{ user.username }}/delete" method="POST">
-  {{form.hidden_tag()}}
-  <button type="submit" class="btn btn-primary">Delete</button>
-</form>
+      <form class="m-1" action="/logout" method="POST">
+        {{form.hidden_tag()}}
+        <button type="submit" class="btn btn-secondary">Logout</button>
+      </form>
 
+      <form class="m-1" action="/users/{{ user.username }}/delete" method="POST">
+        {{form.hidden_tag()}}
+        <button type="submit" class="btn btn-danger">Delete</button>
+      </form>
+    </div>
+
+</div>
 
 {% endblock %}

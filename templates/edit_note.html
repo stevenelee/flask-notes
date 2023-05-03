@@ -2,7 +2,7 @@
 {% block title %}Edit Note{% endblock %}
 
 {% block content %}
-
+<div class="container-fluid">
   <h1 class="display-4">Edit Note</h1>
 
   <form method="POST">
@@ -20,14 +20,12 @@
         {% endfor %}
       </p>
     {% endfor %}
-
-    <button type="submit">Edit Note</button>
-
+    <div class="row">
+      <button type="submit" class="btn btn-success">Submit!</button>
+    </div>
   </form>
+</div>
 
-  <form action="/notes/{{ note.id }}/delete" method="POST">
-    {{form.hidden_tag()}}
-    <button type="submit" class="btn btn-primary">Delete</button>
-  </form>
+
 
   {% endblock %}

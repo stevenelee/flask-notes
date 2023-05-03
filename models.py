@@ -90,7 +90,8 @@ class Note(db.Model):
         nullable=False)
 
     owner_username = db.Column(
-        db.String(20),
         db.ForeignKey("users.username"),
         nullable=False,
         )
+
+    #TODO: add defaults anything nullable
